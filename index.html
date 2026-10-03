@@ -87,6 +87,32 @@
     .btn-admin:hover { background: #475569; }
     .btn-toggle-active { background: #16a34a !important; color: white !important; }
     .btn-toggle-inactive { background: #dc2626 !important; color: white !important; }
+
+    /* لوحة الإحصائيات داخل شاشة الصدارة */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 28px;
+      font-weight: 900;
+      color: #38bdf8;
+      margin-top: 6px;
+    }
+    .stat-title {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+    }
   </style>
   <!-- Firebase Realtime Database SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -188,6 +214,23 @@
         <button class="tab-btn" onclick="filterByGrade('12', this)">الثاني عشر</button>
       </div>
     </div>
+
+    <!-- لوحة الإحصائيات الجديدة -->
+    <div class="stats-container">
+      <div class="stat-box">
+        <div class="stat-title">إجمالي الطلاب المشاركين</div>
+        <div class="stat-num" id="statTotalStudents">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">أصحاب الإجابات الصحيحة (الدرجة الكاملة 6/6)</div>
+        <div class="stat-num" id="statFullScore" style="color: #4ade80;">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">متوسط الأداء العام</div>
+        <div class="stat-num" id="statAvgScore" style="color: #f59e0b;">0 / 6</div>
+      </div>
+    </div>
+
     <table>
       <thead>
         <tr>
@@ -204,7 +247,7 @@
     </table>
     <div style="margin-top: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
       <button id="toggleQuizBtn" class="btn-admin btn-toggle-active" onclick="toggleQuizStatus()">🟢 استقبال الإجابات مفتوح (اضغط للإيقاف)</button>
-      <div style="display: flex; gap: 8px;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn-admin" onclick="toggleFullScreen()">🖥️ ملء الشاشة</button>
         <button class="btn-admin" onclick="clearData()" style="color: #f87171;">🗑️ تصفير</button>
         <button class="btn-admin" onclick="toggleAdminView()">⬅️ رجوع للمسابقة</button>
@@ -264,7 +307,7 @@
     return JSON.parse(localStorage.getItem('smart_science_records_v2') || '[]');
   }
 
-  // تفعيل الدخول المباشر لشاشة العرض عند الضغط على اسم المدرسة مع طلب الرمز السري
+  // الضغط على شعار المدرسة يطلب الرقم السري لدخول شاشة العرض
   document.getElementById('schoolEmblem').addEventListener('click', function() {
     const pass = prompt("🔐 أدخل الرقم السري للوصول إلى لوحة الصدارة:");
     if (pass === "9213") {
@@ -484,7 +527,7 @@
       elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
       const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
       const s = String(elapsedSeconds % 60).padStart(2, '0');
-      document.getElementById('liveTimer').innerText = `⏱️ ${m}:${s}`;
+      document.getElementById('liveTimer').innerText = `⏱️️ ${m}:${s}`;
     }, 1000);
   }
 
@@ -607,6 +650,19 @@
     }
 
     filtered.sort((a, b) => b.score - a.score || a.durationSec - b.durationSec);
+
+    // حساب الإحصائيات (تعتمد على الفلتر النشط أو الكل)
+    const totalCount = filtered.length;
+    const fullScoreCount = filtered.filter(r => r.score === 6).length;
+    let avgScoreVal = 0;
+    if (totalCount > 0) {
+      const sumScores = filtered.reduce((acc, r) => acc + r.score, 0);
+      avgScoreVal = (sumScores / totalCount).toFixed(1);
+    }
+
+    document.getElementById('statTotalStudents').textContent = totalCount;
+    document.getElementById('statFullScore').textContent = fullScoreCount;
+    document.getElementById('statAvgScore').textContent = `${avgScoreVal} / 6`;
 
     const tbody = document.getElementById('leaderboardTbody');
     if (filtered.length === 0) {
