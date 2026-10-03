@@ -578,7 +578,7 @@
       if (confirm("تأكيد أخير: هل أنت متأكد تماماً من حذف وتصفير جميع السجلات؟")) {
         if (recordsRef) {
           recordsRef.remove().catch(e => console.error("Cloud remove failed:", e));
-        
+        }
         localStorage.removeItem('smart_science_records_v2');
         cloudRecords = [];
         updateLeaderboardView();
